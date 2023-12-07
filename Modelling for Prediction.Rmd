@@ -71,9 +71,9 @@ nrow(test.data1)
 
 ```{r}
 model <- glm( logit~BPD+CI, 
-              data = train.data1, family = binomial)
+              data = train.data, family = binomial)
 
-probabilities <- model %>% predict(test.data1, type = "response")
+probabilities <- model %>% predict(test.data, type = "response")
 predicted.classes <- ifelse(probabilities > 0.5, "3rd", "2nd")
 ```
 
@@ -84,7 +84,7 @@ predicted.classes <- ifelse(probabilities > 0.5, "3rd", "2nd")
 # A Logistic Regression Line Curve for Testing and Training Data Set
 
 
-A<-test.data1 %>%
+A<-test.data %>%
   mutate(prob = ifelse(logit == "1", 1, 0)) %>%
   ggplot(aes(CI, prob)) +geom_jitter(height = 0.01)+
   geom_point(alpha = 0.2) +
@@ -98,7 +98,7 @@ A
 
 
 # Model Prediction
-B<-test.data1 %>%mutate(trim=predicted.classes)%>%
+B<-test.data %>%mutate(trim=predicted.classes)%>%
   mutate(prob = ifelse(trim == "3rd", 1, 0)) %>%
   ggplot(aes(CI, prob)) +geom_jitter(height = 0.01)+
   geom_point(alpha = 0.2) +
