@@ -106,11 +106,87 @@ cephalic[cephalic$logit=="2ND"|cephalic$logit=="2nd"|cephalic$logit=="2NDF",]$lo
 cephalic[cephalic$logit=="3RD"|cephalic$logit=="3rd",]$logit<-"1"
 cephalic[cephalic$sex=="F",]$sex<-"0"
 cephalic[cephalic$sex=="M",]$sex<-"1"
-glm(logit~sex, data=cephalic,family = "binomial")
+#glm(logit~sex, data=cephalic,family = "binomial")
 cephalic$logit<-as.factor(cephalic$logit)
 summary(glm(logit~sex, data=cephalic,family = "binomial"))
 summary(glm(logit~SEX+BPD+OFD+FL+AC, data=cephalic,family = "binomial"))
-
+library(caret)
 #write.csv(as.data.frame(muri_logistic$coefficients),"muri2.csv")
 
 
+# Split the data into training and test set
+set.seed(123)
+training.samples <- cephalic$logit %>% 
+  createDataPartition(p = 0.8, list = FALSE)
+train.data  <- cephalic[training.samples, ]
+test.data <- cephalic[-training.samples, ]
+
+# Using the "sample_frac" to divide our data into Training and Testing data set
+train.data1 <- sample_frac(cephalic, 0.6)
+test.data1 <- sample_frac(cephalic, 0.4)
+
+# build the model
+model <- glm( logit~BPD+FL+AC, 
+              data = train.data, family = binomial)
+probabilities <- model %>% predict(test.data, type = "response")
+predicted.classes <- ifelse(probabilities > 0.5, "pos", "neg")
+
+#Visualizing the model using test data set
+test.data %>%mutate(diab=predicted.classes)%>%
+  mutate(prob = ifelse(diab == "pos", 1, 0)) %>%
+  ggplot(aes(glucose, prob)) +
+  geom_point(alpha = 0.2) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial")) +
+  labs(
+    title = "Logistic Regression Model", 
+    x = "Plasma Glucose Concentration",
+    y = "Probability of being diabete-pos"
+  )
+#library(corrplot)
+library(Hmisc)
+cor <- rcorr(as.matrix(cephalic[,-c(1,2,8:11)]))
+r <- cor$r %>% as.table()
+r
+# or alternatively we use the "psych"
+library(psych)
+pairs.panels(cephalic[,-c(1,2,8:11)])
+
+# A Logistic Regression Line Curve for Testing and Training Data Set
+test.data %>%
+  mutate(prob = ifelse(logit == "1", 1, 0)) %>%
+  ggplot(aes(CI, prob)) +geom_jitter(height = 0.01)+
+  geom_point(alpha = 0.2) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial")) +
+  labs(
+    title = "Logistic Regression Model \n Testing data set 40%", 
+    x = "Cephalic Index",
+    y = "Probability of what Trimester"
+  )
+
+train.data1 %>%
+  mutate(prob = ifelse(logit == "1", 1, 0)) %>%
+  ggplot(aes(CI, prob)) +geom_jitter(height = 0.01)+
+  geom_point(alpha = 0.2) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial")) +
+  labs(
+    title = "Logistic Regression Model \n Training data set 60%", 
+    x = "Cephalic Index",
+    y = "Probability of what Trimester"
+  )
+
+model <- glm( logit~BPD+FL+AC+CI, 
+              data = train.data, family = binomial)
+probabilities <- model %>% predict(test.data1, type = "response")
+predicted.classes <- ifelse(probabilities > 0.5, "3rd", "2nd")
+
+# Model Prediction
+test.data1 %>%mutate(trim=predicted.classes)%>%
+  mutate(prob = ifelse(trim == "3rd", 1, 0)) %>%
+  ggplot(aes(CI, prob)) +geom_jitter(height = 0.01)+
+  geom_point(alpha = 0.2) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial")) +
+  labs(
+    title = "Logistic Regression Model \n Testing data set 40% \n Prediction", 
+    x = "Cephalic Index",
+    y = "Probability of what Trimester"
+  )
