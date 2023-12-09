@@ -82,7 +82,19 @@ predicted.classes <- ifelse(probabilities > 0.5, "3rd", "2nd")
 
 ```{r}
 # A Logistic Regression Line Curve for Testing and Training Data Set
+ # Plot of the data trained for prediction
 
+
+train.data %>%
+  mutate(prob = ifelse(logit == "1", 1, 0)) %>%
+  ggplot(aes(CI, prob)) +geom_jitter(height = 0.01)+
+  geom_point(alpha = 0.2) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial")) +
+  labs(
+    title = "Logistic Regression Model \n Testing data set 60%", 
+    x = "Cephalic Index",
+    y = "Probability of what Trimester"
+  )
 
 A<-test.data %>%
   mutate(prob = ifelse(logit == "1", 1, 0)) %>%
